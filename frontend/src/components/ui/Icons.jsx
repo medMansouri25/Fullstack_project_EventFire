@@ -55,9 +55,9 @@ export function MapPinIcon({ size }) {
 export function EuroIcon({ size }) {
   return (
     <Icon size={size}>
-      <path d="M18 6.527A9 9 0 116 17.473"/>
-      <line x1="3" y1="10" x2="14" y2="10"/>
-      <line x1="3" y1="14" x2="14" y2="14"/>
+      <path d="M4 10h12"/>
+      <path d="M4 14h12"/>
+      <path d="M19.5 7a9 9 0 0 0-7.5-4 9 9 0 0 0 0 18 9 9 0 0 0 7.5-4"/>
     </Icon>
   );
 }

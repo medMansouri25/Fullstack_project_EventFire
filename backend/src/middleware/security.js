@@ -41,12 +41,13 @@ const apiLimiter = rateLimit({
 });
 
 // ── 3. Mongo Sanitize — anti NoSQL injection ───────────────────────────────
-// Supprime les clés commençant par $ ou contenant un . dans req.body/query/params
-const mongoSanitizeMiddleware = mongoSanitize({
-  replaceWith: '_',
-  onSanitize: ({ req, key }) => {
-    console.warn(`⚠️  Tentative NoSQL injection bloquée — clé: ${key} — IP: ${req.ip}`);
-  }
-});
+// express-mongo-sanitize incompatible avec Express 5 (req.query est read-only)
+// On sanitise manuellement req.body et req.params uniquement
+const mongoSanitizeMiddleware = (req, _res, next) => {
+  const sanitize = mongoSanitize.sanitize;
+  if (req.body)   req.body   = sanitize(req.body);
+  if (req.params) req.params = sanitize(req.params);
+  next();
+};
 
 module.exports = { helmetMiddleware, authLimiter, apiLimiter, mongoSanitizeMiddleware };

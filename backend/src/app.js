@@ -1,6 +1,7 @@
 const express  = require('express');
 const cors     = require('cors');
 const path     = require('path');
+const passport = require('./config/passport');
 const { helmetMiddleware, authLimiter, apiLimiter, mongoSanitizeMiddleware } = require('./middleware/security');
 
 const app = express();
@@ -30,6 +31,9 @@ app.use(express.urlencoded({ extended: false, limit: '10kb' }));
 
 // ── 4. NoSQL injection sanitization ───────────────────────────────────────
 app.use(mongoSanitizeMiddleware);
+
+// ── 5. Passport (sans session — JWT only) ──────────────────────────────────
+app.use(passport.initialize());
 
 // ── 5. Rate limiting général sur toutes les routes API ────────────────────
 app.use('/api', apiLimiter);
