@@ -10,7 +10,7 @@ function signToken(user) {
   return jwt.sign(
     { id: user._id, email: user.email, role: user.role, name: user.name },
     process.env.JWT_SECRET,
-    { expiresIn: '7d' }
+    { expiresIn: process.env.JWT_EXPIRES_IN || '2h' }
   );
 }
 
@@ -63,7 +63,7 @@ const googleLogin = async (req, res) => {
         name: name || '',
         avatar: picture || '',
         password: null,
-        role: 'admin',
+        role: 'visiteur',
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -83,4 +83,27 @@ const googleLogin = async (req, res) => {
   }
 };
 
-module.exports = { login, googleLogin };
+// ── POST /api/auth/register  (inscription visiteur) ─────────────────────────
+const register = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password)
+      return res.status(400).json({ message: 'Nom, email et mot de passe requis' });
+    if (password.length < 6)
+      return res.status(400).json({ message: 'Le mot de passe doit faire au moins 6 caractères' });
+
+    const existing = await User.findOne({ email: email.toLowerCase().trim() });
+    if (existing)
+      return res.status(409).json({ message: 'Cet email est déjà utilisé' });
+
+    const user = await User.create({ name, email, password, role: 'visiteur' });
+    const token = signToken(user);
+    res.status(201).json({ token, user: { id: user._id, email: user.email, role: user.role, name: user.name, avatar: user.avatar } });
+
+  } catch (error) {
+    console.error('Erreur register:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
+module.exports = { login, googleLogin, register };

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { CalendarIcon, MapPinIcon, BanknoteIcon } from './ui/Icons';
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
@@ -36,69 +37,64 @@ function AvailabilityBar({ capacite, billetsVendus }) {
   );
 }
 
+/* Placeholder quand pas d'image */
+function ImagePlaceholder() {
+  return (
+    <div className="event-card-image-placeholder">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"
+           style={{ color: '#c5c9d1' }}>
+        <path d="M9 18V5l12-2v13"/>
+        <circle cx="6" cy="18" r="3"/>
+        <circle cx="18" cy="16" r="3"/>
+      </svg>
+    </div>
+  );
+}
+
 export default function EventCard({ event }) {
   const navigate = useNavigate();
   const {
-    _id,
-    titre,
-    description,
-    categorie,
-    type,
-    date,
-    heure,
-    ville,
-    lieu,
-    prix,
-    capacite,
-    billetsVendus,
-    image,
+    _id, titre, description, categorie, type,
+    date, heure, ville, lieu, prix, capacite, billetsVendus, image,
   } = event;
 
   return (
     <article className="event-card" onClick={() => navigate(`/events/${_id}`)}>
-      {/* Image with badges overlaid at bottom-left */}
+      {/* Image */}
       <div className="event-card-image-wrap">
         {image ? (
           <img src={image} alt={titre} />
         ) : (
-          <div className="event-card-image-placeholder">🎭</div>
+          <ImagePlaceholder />
         )}
         <div className="event-card-badges">
-          {/* Left badge: category — white bg, black text */}
-          {categorie && (
-            <span className="badge badge-category">{categorie}</span>
-          )}
-          {/* Right badge: type — orange bg, white text */}
-          {type && (
-            <span className="badge badge-type">{type}</span>
-          )}
+          {categorie && <span className="badge badge-category">{categorie}</span>}
+          {type      && <span className="badge badge-type">{type}</span>}
         </div>
       </div>
 
-      {/* Card body */}
+      {/* Corps */}
       <div className="event-card-body">
         <h3 className="event-card-title">{titre}</h3>
-
-        {description && (
-          <p className="event-card-desc">{description}</p>
-        )}
+        {description && <p className="event-card-desc">{description}</p>}
 
         <div className="event-card-meta">
           {(date || heure) && (
             <div className="event-meta-item">
-              <span className="meta-icon">📅</span>
+              <span className="meta-icon"><CalendarIcon size={14} /></span>
               <span>{formatDate(date)}{heure ? ` · ${heure}` : ''}</span>
             </div>
           )}
           {(ville || lieu) && (
             <div className="event-meta-item">
-              <span className="meta-icon">📍</span>
+              <span className="meta-icon"><MapPinIcon size={14} /></span>
               <span>{[lieu, ville].filter(Boolean).join(', ')}</span>
             </div>
           )}
           {prix !== undefined && prix !== null && (
             <div className="event-meta-item">
-              <span className="meta-icon">💶</span>
+              <span className="meta-icon"><BanknoteIcon size={14} /></span>
               <span className="event-price-tag">
                 {prix === 0 ? 'Gratuit' : `${prix} €`}
               </span>

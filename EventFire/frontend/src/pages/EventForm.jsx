@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getEventById, createEvent, updateEvent } from '../services/eventService';
+import CalendarPicker from '../components/ui/CalendarPicker';
+import ImageUploader from '../components/ui/ImageUploader';
+import { AlertTriangleIcon, ArrowLeftIcon, SaveIcon } from '../components/ui/Icons';
 
 const EMPTY_FORM = {
   titre: '',
@@ -15,18 +18,9 @@ const EMPTY_FORM = {
   organisateur: '',
   prix: '',
   capacite: '',
-  billetsVendus: '',
   image: '',
 };
 
-function isValidUrl(str) {
-  try {
-    new URL(str);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 function SectionHeader({ title }) {
   return (
@@ -66,8 +60,8 @@ export default function EventForm() {
           organisateur: data.organisateur || '',
           prix: data.prix !== undefined ? String(data.prix) : '',
           capacite: data.capacite !== undefined ? String(data.capacite) : '',
-          billetsVendus: data.billetsVendus !== undefined ? String(data.billetsVendus) : '',
           image: data.image || '',
+          _billetsVendus: data.billetsVendus || 0, // lecture seule, non envoyé
         });
       } catch (err) {
         console.error(err);
@@ -92,11 +86,11 @@ export default function EventForm() {
     setSaving(true);
     setError('');
 
+    const { _billetsVendus, ...formData } = form; // eslint-disable-line no-unused-vars
     const payload = {
-      ...form,
+      ...formData,
       prix: form.prix !== '' ? Number(form.prix) : 0,
       capacite: form.capacite !== '' ? Number(form.capacite) : 0,
-      billetsVendus: form.billetsVendus !== '' ? Number(form.billetsVendus) : 0,
     };
 
     try {
@@ -216,33 +210,21 @@ export default function EventForm() {
                 <option value="Concert">Concert</option>
                 <option value="Théâtre">Théâtre</option>
                 <option value="Ballet">Ballet</option>
+                <option value="Exposition">Exposition</option>
+                <option value="Autre">Autre</option>
               </select>
             </div>
           </div>
 
           {/* ── Date & Lieu ── */}
           <SectionHeader title="Date & Lieu" />
-          <div className="form-grid-2 form-spacer">
-            <div className="form-group">
-              <label className="form-label" htmlFor="date">Date</label>
-              <input
-                id="date"
-                type="date"
-                className="form-input"
-                value={form.date}
-                onChange={handleChange('date')}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label" htmlFor="heure">Heure</label>
-              <input
-                id="heure"
-                type="time"
-                className="form-input"
-                value={form.heure}
-                onChange={handleChange('heure')}
-              />
-            </div>
+          <div className="form-spacer">
+            <CalendarPicker
+              date={form.date}
+              heure={form.heure}
+              onDateChange={(d) => setForm(prev => ({ ...prev, date: d }))}
+              onHeureChange={(h) => setForm(prev => ({ ...prev, heure: h }))}
+            />
           </div>
           <div className="form-grid-2 form-spacer">
             <div className="form-group">
@@ -284,7 +266,7 @@ export default function EventForm() {
 
           {/* ── Billetterie ── */}
           <SectionHeader title="Billetterie" />
-          <div className="form-grid-3 form-spacer">
+          <div className={`form-spacer ${isEdit ? 'form-grid-3' : 'form-grid-2'}`}>
             <div className="form-group">
               <label className="form-label" htmlFor="prix">Prix (€)</label>
               <input
@@ -303,50 +285,31 @@ export default function EventForm() {
               <input
                 id="capacite"
                 type="number"
-                min="0"
+                min="1"
                 className="form-input"
-                placeholder="0"
+                placeholder="100"
                 value={form.capacite}
                 onChange={handleChange('capacite')}
               />
             </div>
-            <div className="form-group">
-              <label className="form-label" htmlFor="billetsVendus">Billets vendus</label>
-              <input
-                id="billetsVendus"
-                type="number"
-                min="0"
-                className="form-input"
-                placeholder="0"
-                value={form.billetsVendus}
-                onChange={handleChange('billetsVendus')}
-              />
-            </div>
+            {isEdit && (
+              <div className="form-group">
+                <label className="form-label">Billets vendus</label>
+                <div className="form-input" style={{ background: 'var(--bg)', color: 'var(--text-muted)', cursor: 'default' }}>
+                  {form._billetsVendus ?? 0}
+                  <span style={{ fontSize: '0.75rem', marginLeft: 6 }}>(géré par les réservations)</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ── Image ── */}
           <SectionHeader title="Image" />
           <div className="form-grid form-spacer">
-            <div className="form-group">
-              <label className="form-label" htmlFor="image">URL de l'image</label>
-              <input
-                id="image"
-                type="url"
-                className="form-input"
-                placeholder="https://example.com/image.jpg"
-                value={form.image}
-                onChange={handleChange('image')}
-              />
-              {form.image && isValidUrl(form.image) && (
-                <div className="image-preview">
-                  <img
-                    src={form.image}
-                    alt="Aperçu"
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                  />
-                </div>
-              )}
-            </div>
+            <ImageUploader
+              value={form.image}
+              onChange={(url) => setForm(prev => ({ ...prev, image: url }))}
+            />
           </div>
 
           {/* ── Actions ── */}

@@ -2,21 +2,17 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getEvents, deleteEvent } from '../services/eventService';
+import { PlusIcon, SearchIcon, EditIcon, TrashIcon, LoaderIcon, InboxIcon, MusicIcon } from '../components/ui/Icons';
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
   try {
     return new Date(dateStr).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
+      day: 'numeric', month: 'short', year: 'numeric',
     });
-  } catch {
-    return dateStr;
-  }
+  } catch { return dateStr; }
 }
 
-/** Returns a CSS class name for the type/category badge */
 function typeBadgeClass(value) {
   if (!value) return 'badge badge-other';
   const v = value.toLowerCase();
@@ -26,31 +22,26 @@ function typeBadgeClass(value) {
 }
 
 export default function AdminEvents() {
-  const { token } = useAuth();
-  const navigate = useNavigate();
-  const [events, setEvents] = useState([]);
-  const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { token }   = useAuth();
+  const navigate    = useNavigate();
+  const [events, setEvents]       = useState([]);
+  const [search, setSearch]       = useState('');
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState('');
   const [deletingId, setDeletingId] = useState(null);
 
   const loadEvents = async () => {
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
       const data = await getEvents();
       setEvents(Array.isArray(data) ? data : data.events || []);
     } catch (err) {
       console.error(err);
       setError('Impossible de charger les événements.');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    loadEvents();
-  }, []);
+  useEffect(() => { loadEvents(); }, []);
 
   const handleDelete = async (id, titre) => {
     if (!window.confirm(`Supprimer l'événement "${titre}" ? Cette action est irréversible.`)) return;
@@ -61,9 +52,7 @@ export default function AdminEvents() {
     } catch (err) {
       console.error(err);
       alert('Erreur lors de la suppression. Veuillez réessayer.');
-    } finally {
-      setDeletingId(null);
-    }
+    } finally { setDeletingId(null); }
   };
 
   const filtered = events.filter((e) => {
@@ -78,26 +67,22 @@ export default function AdminEvents() {
 
   return (
     <div className="page-content">
-      {/* ── Page header ── */}
+      {/* Header */}
       <div className="admin-page-header">
         <div>
           <h1 className="admin-page-title">Gestion des événements</h1>
           <p className="admin-page-subtitle">Créer, modifier et supprimer des événements</p>
         </div>
-        <button
-          className="btn btn-primary"
-          onClick={() => navigate('/admin/events/new')}
-        >
-          ➕ Nouvel événement
+        <button className="btn btn-primary" onClick={() => navigate('/admin/events/new')}>
+          <PlusIcon size={15} /> Nouvel événement
         </button>
       </div>
 
-      {/* ── Table card ── */}
+      {/* Table card */}
       <div className="table-wrap">
-        {/* Toolbar: search + count */}
         <div className="table-toolbar">
           <div className="search-input-wrap">
-            <span className="icon">🔍</span>
+            <span className="icon"><SearchIcon size={15} /></span>
             <input
               type="text"
               className="search-input"
@@ -113,7 +98,6 @@ export default function AdminEvents() {
           )}
         </div>
 
-        {/* States */}
         {loading ? (
           <div className="loading-wrap">
             <div className="loading-spinner" />
@@ -125,12 +109,12 @@ export default function AdminEvents() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-icon">📭</div>
+            <div className="empty-state-icon">
+              <InboxIcon size={40} />
+            </div>
             <h3 className="empty-state-title">Aucun événement trouvé</h3>
             <p className="empty-state-sub">
-              {search
-                ? 'Aucun résultat pour cette recherche.'
-                : 'Commencez par créer votre premier événement.'}
+              {search ? 'Aucun résultat pour cette recherche.' : 'Commencez par créer votre premier événement.'}
             </p>
           </div>
         ) : (
@@ -149,23 +133,20 @@ export default function AdminEvents() {
               </thead>
               <tbody>
                 {filtered.map((event) => {
-                  const sold = event.billetsVendus || 0;
+                  const sold  = event.billetsVendus || 0;
                   const total = event.capacite || 0;
-                  const pct = total > 0 ? Math.round((sold / total) * 100) : 0;
+                  const pct   = total > 0 ? Math.round((sold / total) * 100) : 0;
 
                   return (
                     <tr key={event._id}>
-                      {/* Événement: thumbnail + title + organizer */}
                       <td>
                         <div className="table-event-cell">
                           {event.image ? (
-                            <img
-                              src={event.image}
-                              alt={event.titre}
-                              className="table-thumbnail"
-                            />
+                            <img src={event.image} alt={event.titre} className="table-thumbnail" />
                           ) : (
-                            <div className="table-thumbnail-placeholder">🎭</div>
+                            <div className="table-thumbnail-placeholder">
+                              <MusicIcon size={18} />
+                            </div>
                           )}
                           <div>
                             <div className="table-event-name">{event.titre}</div>
@@ -176,51 +157,33 @@ export default function AdminEvents() {
                         </div>
                       </td>
 
-                      {/* Type + categorie badges */}
                       <td>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                           {event.type && (
-                            <span
-                              className={typeBadgeClass(event.type)}
-                              style={{ alignSelf: 'flex-start' }}
-                            >
+                            <span className={typeBadgeClass(event.type)} style={{ alignSelf: 'flex-start' }}>
                               {event.type}
                             </span>
                           )}
                           {event.categorie && (
-                            <span
-                              className={typeBadgeClass(event.categorie)}
-                              style={{ alignSelf: 'flex-start' }}
-                            >
+                            <span className={typeBadgeClass(event.categorie)} style={{ alignSelf: 'flex-start' }}>
                               {event.categorie}
                             </span>
                           )}
                         </div>
                       </td>
 
-                      {/* Date */}
                       <td style={{ whiteSpace: 'nowrap' }}>
                         <div style={{ fontSize: '0.84rem' }}>{formatDate(event.date)}</div>
                         {event.heure && (
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            {event.heure}
-                          </div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{event.heure}</div>
                         )}
                       </td>
 
-                      {/* Lieu */}
                       <td>
-                        {event.ville && (
-                          <div style={{ fontSize: '0.84rem' }}>{event.ville}</div>
-                        )}
-                        {event.lieu && (
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            {event.lieu}
-                          </div>
-                        )}
+                        {event.ville && <div style={{ fontSize: '0.84rem' }}>{event.ville}</div>}
+                        {event.lieu  && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{event.lieu}</div>}
                       </td>
 
-                      {/* Billets: X/Y + % + mini bar */}
                       <td style={{ minWidth: 110 }}>
                         <div style={{ fontSize: '0.8rem', marginBottom: 5, color: 'var(--text-muted)' }}>
                           {sold}/{total} · {pct}%
@@ -233,12 +196,10 @@ export default function AdminEvents() {
                         </div>
                       </td>
 
-                      {/* Prix */}
                       <td style={{ fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>
                         {event.prix === 0 ? 'Gratuit' : `${event.prix} €`}
                       </td>
 
-                      {/* Actions */}
                       <td>
                         <div className="table-actions">
                           <button
@@ -246,7 +207,7 @@ export default function AdminEvents() {
                             title="Modifier"
                             onClick={() => navigate(`/admin/events/${event._id}/edit`)}
                           >
-                            ✏️
+                            <EditIcon size={15} />
                           </button>
                           <button
                             className="btn-icon delete"
@@ -254,7 +215,9 @@ export default function AdminEvents() {
                             disabled={deletingId === event._id}
                             onClick={() => handleDelete(event._id, event.titre)}
                           >
-                            {deletingId === event._id ? '⏳' : '🗑️'}
+                            {deletingId === event._id
+                              ? <LoaderIcon size={15} />
+                              : <TrashIcon size={15} />}
                           </button>
                         </div>
                       </td>

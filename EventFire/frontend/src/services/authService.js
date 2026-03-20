@@ -11,3 +11,8 @@ export async function googleLoginUser(credential) {
   const response = await axios.post(`${API}/api/auth/google`, { credential });
   return response.data; // { token, user }
 }
+
+export async function registerUser(name, email, password) {
+  const response = await axios.post(`${API}/api/auth/register`, { name, email, password });
+  return response.data; // { token, user }
+}

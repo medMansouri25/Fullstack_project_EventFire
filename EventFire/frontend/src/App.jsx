@@ -8,9 +8,11 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import EventDetails from './pages/EventDetails';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import AdminEvents from './pages/AdminEvents';
 import EventForm from './pages/EventForm';
+import MesReservations from './pages/MesReservations';
 
 function AppRoutes() {
   return (
@@ -21,6 +23,8 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/events/:id" element={<EventDetails />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/mes-reservations" element={<MesReservations />} />
 
         {/* Protected admin routes */}
         <Route element={<ProtectedRoute />}>

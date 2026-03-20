@@ -13,8 +13,8 @@ const eventSchema = new mongoose.Schema({
     enum: ['Symphonie', 'Festival', 'Opéra', 'Concert', 'Théâtre', 'Ballet', 'Exposition', 'Autre'],
     required: true
   },
-  date: { type: String, required: true },   // stored as "YYYY-MM-DD"
-  heure: { type: String, required: true },  // stored as "HH:MM"
+  date: { type: String, required: true },   
+  heure: { type: String, required: true }, 
   ville: { type: String, required: true },
   lieu: { type: String, required: true },
   organisateur: { type: String, required: true },

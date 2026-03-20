@@ -160,22 +160,26 @@ const seedAdmin = async () => {
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@eventfire.fr';
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
 
-    // Recréer l'admin avec bcrypt direct (bypass mongoose hook pour éviter tout problème)
-    await User.deleteOne({ email: adminEmail });
+    // Upsert admin : crée si absent, met à jour sinon (pas de delete = pas d'orphelins)
     const hashedPassword = await bcrypt.hash(adminPassword, 12);
-    await User.collection.insertOne({
-      email: adminEmail,
-      password: hashedPassword,
-      role: 'admin',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
-    console.log(`✅ Admin créé : ${adminEmail} / ${adminPassword}`);
+    await User.collection.updateOne(
+      { email: adminEmail },
+      {
+        $set: { password: hashedPassword, role: 'admin', updatedAt: new Date() },
+        $setOnInsert: { email: adminEmail, name: 'Admin EventFire', googleId: null, avatar: '', createdAt: new Date() }
+      },
+      { upsert: true }
+    );
+    console.log(`✅ Admin prêt : ${adminEmail}`);
 
-    // Toujours re-seeder les événements pour avoir des photos à jour
-    await Event.deleteMany({});
-    await Event.insertMany(sampleEvents);
-    console.log(`✅ ${sampleEvents.length} événements insérés avec photos.`);
+    // Seeder les événements uniquement si la collection est vide
+    const count = await Event.countDocuments();
+    if (count === 0) {
+      await Event.insertMany(sampleEvents);
+      console.log(`✅ ${sampleEvents.length} événements insérés (collection vide).`);
+    } else {
+      console.log(`ℹ️  ${count} événements déjà présents — seed ignoré.`);
+    }
 
   } catch (error) {
     console.error('Erreur lors du seeding :', error.message);
@@ -183,3 +187,4 @@ const seedAdmin = async () => {
 };
 
 module.exports = seedAdmin;
+module.exports.sampleEvents = sampleEvents;

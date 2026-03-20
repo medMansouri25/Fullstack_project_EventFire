@@ -1,17 +1,25 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { loginUser, googleLoginUser } from '../services/authService';
+import { AlertTriangleIcon, ArrowLeftIcon } from '../components/ui/Icons';
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const role = searchParams.get('role') || 'client';
+  const isAdminMode = role === 'admin';
 
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
+
+  const redirectAfterLogin = (user) => {
+    navigate(user.role === 'admin' ? '/admin' : '/mes-reservations');
+  };
 
   /* ── Connexion email/password ── */
   const handleSubmit = async (e) => {
@@ -21,7 +29,7 @@ export default function Login() {
     try {
       const data = await loginUser(email, password);
       login(data.token, data.user);
-      navigate('/admin');
+      redirectAfterLogin(data.user);
     } catch (err) {
       console.error('Login error:', err);
       const msg = err.response?.data?.message
@@ -32,13 +40,13 @@ export default function Login() {
     }
   };
 
-  /* ── Connexion Google ── */
+  /* ── Connexion Google (client uniquement) ── */
   const handleGoogleSuccess = async (credentialResponse) => {
     setLoading(true); setError('');
     try {
       const data = await googleLoginUser(credentialResponse.credential);
       login(data.token, data.user);
-      navigate('/admin');
+      redirectAfterLogin(data.user);
     } catch (err) {
       console.error('Google login error:', err);
       setError(err.response?.data?.message
@@ -66,34 +74,45 @@ export default function Login() {
           <span>EventFire</span>
         </div>
 
-        <h1 className="login-title">Connexion Admin</h1>
-        <p className="login-subtitle">Accès réservé aux administrateurs</p>
+        {isAdminMode ? (
+          <>
+            <h1 className="login-title">Connexion Administrateur</h1>
+            <p className="login-subtitle">Accès réservé à l'équipe de gestion</p>
+          </>
+        ) : (
+          <>
+            <h1 className="login-title">Connexion Client</h1>
+            <p className="login-subtitle">Accédez à votre espace réservation</p>
+          </>
+        )}
 
         {/* Erreur */}
         {error && (
           <div className="error-alert" role="alert">
-            <span>⚠️</span>
+            <AlertTriangleIcon size={16} />
             <span>{error}</span>
           </div>
         )}
 
-        {/* ── Bouton Google ── */}
-        <div className="google-btn-wrap">
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={handleGoogleError}
-            text="signin_with"
-            shape="rectangular"
-            logo_alignment="left"
-            width="100%"
-            locale="fr"
-          />
-        </div>
-
-        {/* Séparateur */}
-        <div className="login-divider">
-          <span>ou</span>
-        </div>
+        {/* ── Bouton Google (client uniquement) ── */}
+        {!isAdminMode && (
+          <>
+            <div className="google-btn-wrap">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                text="signin_with"
+                shape="rectangular"
+                logo_alignment="left"
+                width="100%"
+                locale="fr"
+              />
+            </div>
+            <div className="login-divider">
+              <span>ou</span>
+            </div>
+          </>
+        )}
 
         {/* ── Formulaire email/password ── */}
         <form className="login-form" onSubmit={handleSubmit} noValidate>
@@ -103,7 +122,7 @@ export default function Login() {
               id="email"
               type="email"
               className="form-input"
-              placeholder="admin@eventfire.fr"
+              placeholder={isAdminMode ? 'admin@eventfire.fr' : 'jean@exemple.fr'}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
@@ -133,9 +152,17 @@ export default function Login() {
           </button>
         </form>
 
+        {/* ── Lien inscription (client uniquement) ── */}
+        {!isAdminMode && (
+          <p style={{ textAlign: 'center', marginTop: 16, fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+            Pas encore de compte ?{' '}
+            <Link to="/register" style={{ color: 'var(--primary)', fontWeight: 600 }}>Créer un compte</Link>
+          </p>
+        )}
+
         <div className="login-back">
           <Link to="/" className="back-link" style={{ justifyContent: 'center' }}>
-            ← Retour au site
+            <ArrowLeftIcon size={15} /> Retour au site
           </Link>
         </div>
       </div>

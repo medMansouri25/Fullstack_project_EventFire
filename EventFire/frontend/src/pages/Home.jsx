@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import FilterBar from '../components/FilterBar';
 import EventCard from '../components/EventCard';
 import { getEvents } from '../services/eventService';
+import { AlertTriangleIcon, MusicIcon } from '../components/ui/Icons';
 
 export default function Home() {
   const [events, setEvents] = useState([]);
@@ -62,14 +63,14 @@ export default function Home() {
         </div>
       ) : error ? (
         <div className="loading-wrap">
-          <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>⚠️</div>
+          <span style={{ color: 'var(--primary)', marginBottom: 12 }}><AlertTriangleIcon size={40} /></span>
           <p style={{ color: 'var(--primary)', fontWeight: 700, marginBottom: 6 }}>Erreur de connexion</p>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{error}</p>
         </div>
       ) : events.length === 0 ? (
         <div className="events-grid">
           <div className="empty-state">
-            <div className="empty-state-icon">🎭</div>
+            <div className="empty-state-icon"><MusicIcon size={40} /></div>
             <h3 className="empty-state-title">Aucun événement trouvé</h3>
             <p className="empty-state-sub">Essayez de modifier vos filtres de recherche.</p>
           </div>

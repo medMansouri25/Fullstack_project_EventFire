@@ -7,12 +7,12 @@ const userSchema = new mongoose.Schema({
   googleId: { type: String, default: null },   // ID Google OAuth
   name:     { type: String, default: '' },
   avatar:   { type: String, default: '' },
-  role: { type: String, default: 'admin' }
+  role: { type: String, enum: ['admin', 'visiteur'], default: 'visiteur' }
 }, { timestamps: true });
 
 // Hash password before save (Mongoose 7+ : async middleware sans next())
 userSchema.pre('save', async function() {
-  if (!this.isModified('password')) return;
+  if (!this.isModified('password') || !this.password) return;
   this.password = await bcrypt.hash(this.password, 12);
 });
 

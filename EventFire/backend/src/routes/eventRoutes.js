@@ -1,5 +1,6 @@
 const router = require('express').Router();
-const auth = require('../middleware/authMiddleware');
+const auth  = require('../middleware/authMiddleware');
+const admin = require('../middleware/adminMiddleware');
 const {
   getEvents,
   getEventById,
@@ -12,9 +13,9 @@ const {
 router.get('/', getEvents);
 router.get('/:id', getEventById);
 
-// Protected routes (auth required)
-router.post('/', auth, createEvent);
-router.put('/:id', auth, updateEvent);
-router.delete('/:id', auth, deleteEvent);
+// Admin-only routes
+router.post('/',     auth, admin, createEvent);
+router.put('/:id',   auth, admin, updateEvent);
+router.delete('/:id', auth, admin, deleteEvent);
 
 module.exports = router;
