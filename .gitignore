@@ -24,3 +24,9 @@ Thumbs.db
 .vscode/
 .idea/
 *.pdf
+
+# Claude Code
+.claude/settings.local.json
+
+# Brouillons
+brouillon*.txt
