@@ -136,7 +136,7 @@ SMTP_PORT=587
 SMTP_USER=votre_user_mailtrap
 SMTP_PASS=votre_pass_mailtrap
 
-# Compte admin (optionnel — par défaut : admin@eventfire.fr / admin123)
+# Compte admin (optionnel pour tester — par défaut : admin@eventfire.fr / admin123)
 ADMIN_EMAIL=admin@eventfire.fr
 ADMIN_PASSWORD=admin123
 ```
