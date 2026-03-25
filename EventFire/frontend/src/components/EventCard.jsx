@@ -52,7 +52,7 @@ function ImagePlaceholder() {
   );
 }
 
-export default function EventCard({ event }) {
+export default function EventCard({ event, isPast = false }) {
   const navigate = useNavigate();
   const {
     _id, titre, description, categorie, type,
@@ -60,7 +60,11 @@ export default function EventCard({ event }) {
   } = event;
 
   return (
-    <article className="event-card" onClick={() => navigate(`/events/${_id}`)}>
+    <article
+      className="event-card"
+      onClick={() => navigate(`/events/${_id}`)}
+      style={isPast ? { opacity: 0.6, filter: 'grayscale(40%)' } : {}}
+    >
       {/* Image */}
       <div className="event-card-image-wrap">
         {image ? (
@@ -69,6 +73,9 @@ export default function EventCard({ event }) {
           <ImagePlaceholder />
         )}
         <div className="event-card-badges">
+          {isPast && (
+            <span className="badge" style={{ background: '#6b7280', color: '#fff' }}>Clôturé</span>
+          )}
           {categorie && <span className="badge badge-category">{categorie}</span>}
           {type      && <span className="badge badge-type">{type}</span>}
         </div>

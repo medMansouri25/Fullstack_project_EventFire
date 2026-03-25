@@ -103,6 +103,12 @@ export default function EventDetails() {
 
   const { titre, description, categorie, type, date, heure, ville, lieu, organisateur, prix, capacite, billetsVendus, image } = event;
 
+  const eventDate = new Date(date);
+  eventDate.setHours(0, 0, 0, 0);
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0);
+  const isPast = eventDate < todayDate;
+
   return (
     <div>
       {/* Back link */}
@@ -207,6 +213,17 @@ export default function EventDetails() {
           {/* Disponibilité */}
           <AvailabilityBar capacite={capacite} billetsVendus={billetsVendus} />
 
+          {/* ── Événement clôturé ── */}
+          {isPast ? (
+            <div style={{
+              textAlign: 'center', padding: '20px 0',
+              color: '#6b7280', borderTop: '1px solid var(--border)', marginTop: 12
+            }}>
+              <p style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>Événement clôturé</p>
+              <p style={{ fontSize: '0.83rem' }}>Cet événement s'est déjà déroulé.</p>
+            </div>
+          ) : (
+          <>
           {/* Message réservation */}
           {resMsg.text && (
             <div className={resMsg.type === 'success' ? 'res-msg res-msg--success' : 'res-msg res-msg--error'}>
@@ -297,6 +314,8 @@ export default function EventDetails() {
             </svg>
             Réservation sécurisée · Annulation gratuite
           </p>
+          </>
+          )}
         </div>
       </div>
     </div>

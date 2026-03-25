@@ -7,10 +7,12 @@ Application web full-stack de gestion et réservation d'événements culturels, 
 ## Table des matières
 
 - [Aperçu du projet](#aperçu-du-projet)
+- [Fonctionnalités](#fonctionnalités)
 - [Stack technique](#stack-technique)
 - [Prérequis](#prérequis)
 - [Installation](#installation)
 - [Configuration des variables d'environnement](#configuration-des-variables-denvironnement)
+- [Configuration Google OAuth](#configuration-google-oauth)
 - [Lancer le projet](#lancer-le-projet)
 - [Comptes de test](#comptes-de-test)
 - [Structure du projet](#structure-du-projet)
@@ -22,13 +24,33 @@ Application web full-stack de gestion et réservation d'événements culturels, 
 
 ## Aperçu du projet
 
-**EventFire** est une plateforme complète permettant de :
+**EventFire** est une plateforme complète permettant de gérer et réserver des événements culturels (concerts, festivals, théâtre, expositions…).
 
-- **Côté Admin** : créer, modifier et supprimer des événements, consulter un tableau de bord avec statistiques (billets vendus, revenus, taux d'occupation)
-- **Côté Client** : parcourir les événements, réserver des places, consulter et annuler ses réservations
-- **Authentification** : connexion email/mot de passe ou via Google OAuth (clients uniquement)
+Architecture découplée : backend REST API (Node.js/Express) + frontend React communiquant via Axios, avec MongoDB comme base de données.
 
-Architecture découplée : backend REST API + frontend React communiquant via Axios.
+---
+
+## Fonctionnalités
+
+### Espace Admin
+- Connexion sécurisée (réservée aux emails `@eventfire.fr`)
+- Tableau de bord : billets vendus, revenus totaux, taux d'occupation, top 5 événements
+- CRUD complet des événements (titre, date, lieu, prix, capacité, image)
+- Upload d'images pour les événements
+
+### Espace Client
+- Inscription par email/mot de passe ou connexion via **Google OAuth**
+- Parcourir et filtrer les événements
+- Réserver des places avec sélecteur de quantité et calcul du total
+- Consulter et annuler ses réservations depuis "Mes réservations"
+- Email de confirmation à chaque réservation (via Nodemailer/Mailtrap)
+
+### Sécurité
+- Authentification JWT (2h d'expiration)
+- Helmet (headers HTTP sécurisés)
+- Rate limiting : 10 tentatives auth / 15 min, 200 req API / 15 min
+- Sanitisation NoSQL (protection injection MongoDB)
+- CORS restreint au domaine frontend
 
 ---
 
@@ -86,7 +108,7 @@ npm install
 
 ## Configuration des variables d'environnement
 
-Créez le fichier `EventFire/backend/.env` :
+### Backend — `EventFire/backend/.env`
 
 ```env
 # Serveur
@@ -119,7 +141,33 @@ ADMIN_EMAIL=admin@eventfire.fr
 ADMIN_PASSWORD=admin123
 ```
 
-> **Important :** Ne commitez jamais le fichier `.env`. Il est listé dans `.gitignore`.
+### Frontend — `EventFire/frontend/.env`
+
+```env
+VITE_GOOGLE_CLIENT_ID=votre_google_client_id
+```
+
+> **Important :** Ne commitez jamais les fichiers `.env`. Ils sont listés dans `.gitignore`.
+
+---
+
+## Configuration Google OAuth
+
+Pour que la connexion Google fonctionne, il faut créer des identifiants sur Google Cloud Console :
+
+1. Aller sur [https://console.cloud.google.com/](https://console.cloud.google.com/)
+2. Créer un nouveau projet (ou en sélectionner un existant)
+3. Menu **APIs & Services** → **Credentials** → **Create Credentials** → **OAuth 2.0 Client ID**
+4. Type d'application : **Web application**
+5. Ajouter dans **Authorized JavaScript origins** :
+   ```
+   http://localhost:5173
+   ```
+6. Ajouter dans **Authorized redirect URIs** :
+   ```
+   http://localhost:3000/api/auth/google/callback
+   ```
+7. Copier le **Client ID** et le **Client Secret** dans vos fichiers `.env`
 
 ---
 
@@ -163,9 +211,9 @@ L'application est accessible sur **http://localhost:5173**.
 
 ## Comptes de test
 
-| Rôle  | Email                  | Mot de passe | Accès                        |
-|-------|------------------------|--------------|------------------------------|
-| Admin | `admin@eventfire.fr`   | `admin123`   | Dashboard, gestion événements |
+| Rôle   | Email                | Mot de passe | Accès                          |
+|--------|----------------------|--------------|--------------------------------|
+| Admin  | `admin@eventfire.fr` | `admin123`   | Dashboard, gestion événements  |
 | Client | S'inscrire via `/register` ou Google OAuth | — | Réservations |
 
 > **Règle admin :** seuls les emails `@eventfire.fr` peuvent se connecter en tant qu'administrateur. Google OAuth est réservé aux clients.
@@ -181,7 +229,7 @@ L'application est accessible sur **http://localhost:5173**.
 ├── README.md
 └── EventFire/
     ├── backend/
-    │   ├── uploads/                # Images uploadées (gitkeep)
+    │   ├── uploads/                # Images uploadées
     │   └── src/
     │       ├── server.js           # Point d'entrée — connectDB + seedAdmin + listen
     │       ├── app.js              # Express : middlewares, routes, error handler
@@ -208,8 +256,8 @@ L'application est accessible sur **http://localhost:5173**.
     │       │   ├── statsRoutes.js
     │       │   └── uploadRoutes.js
     │       └── utils/
-    │           ├── seedAdmin.js    # Seed admin + événements de démo
-    │           └── mailer.js       # Email de confirmation Nodemailer
+    │           ├── seedAdmin.js    # Seed admin + événements de démo au démarrage
+    │           └── mailer.js       # Email de confirmation (Nodemailer)
     └── frontend/
         └── src/
             ├── main.jsx
@@ -226,10 +274,10 @@ L'application est accessible sur **http://localhost:5173**.
             │   ├── EventDetails.jsx    # Détail + réservation (public)
             │   ├── Login.jsx           # Connexion admin / client
             │   ├── Register.jsx        # Inscription client
-            │   ├── MesReservations.jsx # Espace client
+            │   ├── MesReservations.jsx # Espace client — historique réservations
             │   ├── Dashboard.jsx       # Tableau de bord admin
             │   ├── AdminEvents.jsx     # Gestion événements (admin)
-            │   └── EventForm.jsx       # Formulaire création/édition
+            │   └── EventForm.jsx       # Formulaire création/édition événement
             └── services/           # Appels API Axios (authService, eventService…)
 ```
 
@@ -239,43 +287,43 @@ L'application est accessible sur **http://localhost:5173**.
 
 ### Authentification — `/api/auth`
 
-| Méthode | Endpoint              | Auth | Description                        |
-|---------|-----------------------|------|------------------------------------|
-| POST    | `/login`              | —    | Connexion email/mot de passe       |
-| POST    | `/register`           | —    | Inscription visiteur               |
-| POST    | `/google`             | —    | Connexion via Google (ID token)    |
-| GET     | `/google/redirect`    | —    | Redirect OAuth Google              |
-| GET     | `/google/callback`    | —    | Callback OAuth Google              |
+| Méthode | Endpoint           | Auth | Description                     |
+|---------|--------------------|------|---------------------------------|
+| POST    | `/login`           | —    | Connexion email/mot de passe    |
+| POST    | `/register`        | —    | Inscription visiteur            |
+| POST    | `/google`          | —    | Connexion via Google (ID token) |
+| GET     | `/google/redirect` | —    | Redirect OAuth Google           |
+| GET     | `/google/callback` | —    | Callback OAuth Google           |
 
 ### Événements — `/api/events`
 
-| Méthode | Endpoint       | Auth         | Description                  |
-|---------|----------------|--------------|------------------------------|
-| GET     | `/`            | —            | Liste tous les événements    |
-| GET     | `/:id`         | —            | Détail d'un événement        |
-| POST    | `/`            | Admin        | Créer un événement           |
-| PUT     | `/:id`         | Admin        | Modifier un événement        |
-| DELETE  | `/:id`         | Admin        | Supprimer un événement       |
+| Méthode | Endpoint  | Auth  | Description               |
+|---------|-----------|-------|---------------------------|
+| GET     | `/`       | —     | Liste tous les événements |
+| GET     | `/:id`    | —     | Détail d'un événement     |
+| POST    | `/`       | Admin | Créer un événement        |
+| PUT     | `/:id`    | Admin | Modifier un événement     |
+| DELETE  | `/:id`    | Admin | Supprimer un événement    |
 
 ### Réservations — `/api/reservations`
 
-| Méthode | Endpoint       | Auth         | Description                            |
-|---------|----------------|--------------|----------------------------------------|
-| POST    | `/`            | Visiteur     | Créer / incrémenter une réservation    |
-| GET     | `/me`          | Visiteur     | Mes réservations                       |
-| DELETE  | `/:id`         | Visiteur     | Annuler une réservation                |
+| Méthode | Endpoint  | Auth     | Description                          |
+|---------|-----------|----------|--------------------------------------|
+| POST    | `/`       | Visiteur | Créer / incrémenter une réservation  |
+| GET     | `/me`     | Visiteur | Mes réservations                     |
+| DELETE  | `/:id`    | Visiteur | Annuler une réservation              |
 
 ### Statistiques — `/api/stats`
 
-| Méthode | Endpoint | Auth  | Description                          |
-|---------|----------|-------|--------------------------------------|
-| GET     | `/`      | Admin | Statistiques globales du dashboard   |
+| Méthode | Endpoint | Auth  | Description                        |
+|---------|----------|-------|------------------------------------|
+| GET     | `/`      | Admin | Statistiques globales du dashboard |
 
 ### Upload — `/api/upload`
 
-| Méthode | Endpoint | Auth  | Description              |
-|---------|----------|-------|--------------------------|
-| POST    | `/`      | Admin | Upload image événement   |
+| Méthode | Endpoint | Auth  | Description            |
+|---------|----------|-------|------------------------|
+| POST    | `/`      | Admin | Upload image événement |
 
 ---
 
@@ -283,20 +331,20 @@ L'application est accessible sur **http://localhost:5173**.
 
 ### Backend
 
-| Commande           | Description                                    |
-|--------------------|------------------------------------------------|
-| `npm run dev`      | Serveur avec nodemon (hot-reload)              |
-| `npm start`        | Serveur en mode production                     |
-| `npm run seed`     | Insère les événements de démo (si collection vide) |
-| `npm run seed:reset` | Force la réinsertion des événements de démo  |
+| Commande             | Description                                        |
+|----------------------|----------------------------------------------------|
+| `npm run dev`        | Serveur avec nodemon (hot-reload)                  |
+| `npm start`          | Serveur en mode production                         |
+| `npm run seed`       | Insère les événements de démo (si collection vide) |
+| `npm run seed:reset` | Force la réinsertion des événements de démo        |
 
 ### Frontend
 
-| Commande           | Description                                    |
-|--------------------|------------------------------------------------|
-| `npm run dev`      | Serveur de développement Vite                  |
-| `npm run build`    | Build de production                            |
-| `npm run preview`  | Prévisualise le build en local                 |
+| Commande          | Description                       |
+|-------------------|-----------------------------------|
+| `npm run dev`     | Serveur de développement Vite     |
+| `npm run build`   | Build de production               |
+| `npm run preview` | Prévisualise le build en local    |
 
 ---
 

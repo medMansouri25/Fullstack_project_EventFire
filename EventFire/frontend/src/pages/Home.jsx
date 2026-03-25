@@ -4,9 +4,13 @@ import EventCard from '../components/EventCard';
 import { getEvents } from '../services/eventService';
 import { AlertTriangleIcon, MusicIcon } from '../components/ui/Icons';
 
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+
 export default function Home() {
   const [events, setEvents] = useState([]);
   const [filters, setFilters] = useState({ search: '', category: '', type: '' });
+  const [showPast, setShowPast] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -15,7 +19,8 @@ export default function Home() {
     setError('');
     try {
       const data = await getEvents(filters);
-      setEvents(Array.isArray(data) ? data : data.events || []);
+      const all = Array.isArray(data) ? data : data.events || [];
+      setEvents(all);
     } catch (err) {
       console.error(err);
       setError('Impossible de charger les événements. Vérifiez que le serveur est démarré.');
@@ -29,6 +34,11 @@ export default function Home() {
     const timer = setTimeout(fetchEvents, 300);
     return () => clearTimeout(timer);
   }, [fetchEvents]);
+
+  const upcomingEvents = events.filter(e => new Date(e.date) >= today);
+  const pastEvents     = events.filter(e => new Date(e.date) < today);
+  const pastCount      = pastEvents.length;
+  const visibleEvents  = showPast ? events : upcomingEvents;
 
   return (
     <div>
@@ -47,11 +57,21 @@ export default function Home() {
         <FilterBar filters={filters} onChange={setFilters} />
       </div>
 
-      {/* ── Results count ── */}
+      {/* ── Results count + toggle événements passés ── */}
       {!loading && !error && (
-        <div className="results-bar">
-          <strong>{events.length}</strong>{' '}
-          événement{events.length !== 1 ? 's' : ''} trouvé{events.length !== 1 ? 's' : ''}
+        <div className="results-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>
+            <strong>{visibleEvents.length}</strong>{' '}
+            événement{visibleEvents.length !== 1 ? 's' : ''} trouvé{visibleEvents.length !== 1 ? 's' : ''}
+          </span>
+          {pastCount > 0 && (
+            <button
+              onClick={() => setShowPast(p => !p)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-muted)', textDecoration: 'underline' }}
+            >
+              {showPast ? 'Masquer les événements passés' : `Voir les ${pastCount} événement${pastCount > 1 ? 's' : ''} passé${pastCount > 1 ? 's' : ''}`}
+            </button>
+          )}
         </div>
       )}
 
@@ -67,7 +87,7 @@ export default function Home() {
           <p style={{ color: 'var(--primary)', fontWeight: 700, marginBottom: 6 }}>Erreur de connexion</p>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{error}</p>
         </div>
-      ) : events.length === 0 ? (
+      ) : visibleEvents.length === 0 ? (
         <div className="events-grid">
           <div className="empty-state">
             <div className="empty-state-icon"><MusicIcon size={40} /></div>
@@ -77,8 +97,8 @@ export default function Home() {
         </div>
       ) : (
         <div className="events-grid">
-          {events.map((event) => (
-            <EventCard key={event._id} event={event} />
+          {visibleEvents.map((event) => (
+            <EventCard key={event._id} event={event} isPast={new Date(event.date) < today} />
           ))}
         </div>
       )}
